@@ -1,0 +1,1 @@
+﻿{ "name": "What can I Afford Today?", "short_name": "BudgetApp", "start_url": "/static/index.html", "display": "standalone", "background_color": "#020617", "theme_color": "#020617", "icons": [ { "src": "bg.png", "sizes": "192x192", "type": "image/png" }, { "src": "bg.png", "sizes": "512x512", "type": "image/png" } ] }

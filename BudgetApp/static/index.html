@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#020617">
+    <title>What can I Afford Today?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        /* Custom styles for native dialog to match Glassmorphism theme */
+        dialog::backdrop {
+            background: rgba(2, 6, 23, 0.7);
+            backdrop-filter: blur(8px);
+        }
+        
+        .modal-checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .modal-checkbox-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .modal-checkbox-item input {
+            cursor: pointer;
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+        }
+        .modal-checkbox-item span {
+            font-size: 0.95rem;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Matrix $ Fire Rain Background -->
+    <canvas id="canvas" class="matrix-bg"></canvas>
+
+    <!-- Batch Delete Modal -->
+    <dialog id="delete-modal" style="margin: auto; padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px); color: white; width: 90%; max-width: 480px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+        <h3 style="margin-bottom: 0.5rem; font-size: 1.4rem; font-family: 'Inter'; color: #f8fafc;">Manage History</h3>
+        <p style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 1.5rem;">The app will store up to 100 searches.  Select specific historical searches to delete, or Clear ALL to wipe all records at once.</p>
+        
+        <div id="modal-history-list" style="max-height: 280px; overflow-y: auto; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.5rem; background: rgba(0,0,0,0.2);">
+            <!-- checkboxes go here dynamically -->
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center;">
+            <button id="modal-cancel" style="padding: 10px 16px; font-weight: 500; font-family: 'Inter'; background: none; border: none; color: #94a3b8; cursor: pointer; transition: 0.2s;">Cancel</button>
+            <button id="modal-delete-selected" style="padding: 10px 16px; font-weight: 600; font-family: 'Inter'; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #c7d2fe; border-radius: 8px; cursor: pointer; transition: 0.2s;">Delete Selected</button>
+            <button id="modal-delete-all" style="padding: 10px 16px; font-weight: 600; font-family: 'Inter'; background: rgba(244, 63, 94, 0.9); border: none; color: white; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(244,63,94,0.3); transition: 0.2s;">Clear ALL</button>
+        </div>
+    </dialog>
+
+    <!-- Application Body -->
+    <div class="app-container">
+        <!-- Sidebar for History -->
+        <aside class="sidebar">
+            <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Recent Searches</h2>
+                <button id="clear-history-btn" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244,63,94,0.3); color: #f43f5e; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;" title="Manage your recent searches">Clear All</button>
+                <button id="toggle-history-btn" style="display:none;">Show History</button>
+            </div>
+            <div id="history-list" class="history-list">
+                <!-- Dynamic history items -->
+                <p class="empty-state">No recent searches</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="dashboard-header">
+                <div>
+                    <h1>What can I Afford Today?</h1>
+                    <p>Real-time average local prices by zip code.</p>
+                </div>
+                
+                <section class="search-section glass-card horizon-bar">
+                    <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                        <button type="button" id="mode-standard" class="mode-btn active">Standard Search</button>
+                        <button type="button" id="mode-commute" class="mode-btn">Commute Mode</button>
+                    </div>
+                    <form id="search-form" class="horizon-form">
+                        <div id="zip-container" class="form-group zip-group">
+                            <label for="zip">Zip</label>
+                            <input type="text" id="zip" name="zip" placeholder="90210">
+                        </div>
+                        <div id="commute-container" class="form-group zip-group" style="display:none; flex: 0 0 220px; gap: 10px; flex-direction:row;">
+                            <div>
+                                <label for="origin-zip">Start</label>
+                                <input type="text" id="origin-zip" style="width:100px;" title="Please enter local City, State abbreviation (e.g. Los Angeles, CA)">
+                            </div>
+                            <div>
+                                <label for="dest-zip">End</label>
+                                <input type="text" id="dest-zip" style="width:100px;" title="Please enter local City, State abbreviation (e.g. Los Angeles, CA)">
+                            </div>
+                        </div>
+                        <div class="form-group radius-group">
+                            <label for="radius">Radius (Miles)</label>
+                            <input type="number" id="radius" name="radius" required value="10">
+                        </div>
+                        <div class="form-group items-group">
+                            <label for="custom-items">Items to Search</label>
+                            <input type="text" id="custom-items" name="custom-items" required placeholder="Milk, Gas, Bread" value="4 gallons of milk, 12 gallons of Gas, 5 lbs of Tomatoes" title="Please fill out this field, and use a comma to separate each item.">
+                        </div>
+                        <button type="submit" class="btn-primary" id="search-btn">
+                            <span class="btn-text">Search</span>
+                            <div class="loader" id="loader"></div>
+                        </button>
+                    </form>
+                </section>
+            </header>
+
+            <section class="results-section hidden" id="results-section">
+                <h2>Local Findings</h2>
+                <div id="results-container" class="results-grid">
+                    <!-- Dynamic result cards -->
+                </div>
+            </section>
+        </main>
+
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
